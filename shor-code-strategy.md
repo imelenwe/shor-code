@@ -91,17 +91,6 @@ Z-syndrome lookup (2 bits total):
 11 → Z on any qubit in block 1
 01 → Z on any qubit in block 2
 ```
-
-### `decode()`
-Reverse of `encode()`:
-1. Undo inner bit-flip: CX from block heads to companions (same gates, same order — CX is self-inverse)
-2. Undo outer phase-flip: H on [0,3,6], then CX(0→3), CX(0→6)
-3. Result: logical qubit back on q[0]
-
-### Full pipeline check
-After decode, extract statevector of q[0] and compare to original α, β via `state_fidelity`.
-Must be 1.0 at p=0 before proceeding to noise experiments.
-
 ---
 
 ## Phase 4 — Noise Model Experiments (Next)
