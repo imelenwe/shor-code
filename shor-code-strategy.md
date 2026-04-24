@@ -71,7 +71,7 @@ Syndrome decoding: `00`→no error, `10`→block 0, `11`→block 1, `01`→block
 
 ---
 
-## Phase 3 — Correction & Decode (TODO)
+## Phase 3 — Correction & Decode (DONE)
 
 ### `correct(syndrome_bits)`
 Classical lookup: reads the 8-bit syndrome string, applies corrective gates.
