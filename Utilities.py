@@ -1,7 +1,7 @@
 from qiskit import QuantumCircuit, QuantumRegister, ClassicalRegister
 from qiskit_aer import Aer
 # At the top of your utils file, add:
-from qiskit.quantum_info import Statevector
+from qiskit.quantum_info import Statevector, DensityMatrix
 import numpy as np
 import math as m
 from qiskit_aer import QasmSimulator
@@ -37,10 +37,20 @@ def QFT_dag(num_qubits):
 
     return qc
 
-# inprogess has bugs
-# check deutsch-algo-v1
-def wavefunc(qc, precision=5, top_to_bottom=False):
-    sv = Statevector(qc).data
+# implement a method to print the statevector in a nice format, with options for precision and bit order
+# works for both qc or statevector objects
+def wavefunc(obj, precision=5, top_to_bottom=False):
+    if isinstance(obj, QuantumCircuit):
+        sv = Statevector(obj).data
+    elif isinstance(obj, DensityMatrix):
+        vals, vecs = np.linalg.eigh(obj.data)
+        sv = vecs[:, -1]   # 1D array, same shape as Statevector case
+    elif isinstance(obj, Statevector):
+        sv = obj.data
+    else:
+        sv = obj.data
+
+
     n = int(np.log2(len(sv)))
     terms = []
 
