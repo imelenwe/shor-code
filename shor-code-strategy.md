@@ -18,7 +18,7 @@ Result: 1 logical qubit → 9 physical qubits. Corrects any single-qubit X, Z, o
 Circuit shape:
 ```
 encode() → [inject error] → syndrome_x_measurement() → syndrome_z_measurement()
-        → correct(syndrome_bits) → decode() → verify
+        → correct(syndrome_bits) → verify
 ```
 
 All syndrome measurement is classical postprocessing (not mid-circuit feedback). Syndrome
@@ -93,6 +93,24 @@ Z-syndrome lookup (2 bits total):
 ```
 ---
 
+## File Structure
+
+```
+shor_qec.py              # shared library — all QEC functions
+Shor-Code.ipynb          # Phase 1–3: circuit walkthrough, syndrome tests, correction demo
+Noise-Experiments.ipynb  # Phase 4: noise sweeps, IBM hardware comparison, plots
+Utilities.py             # wavefunc, QFT helpers
+shor-code-strategy.md    # this file
+```
+
+`shor_qec.py` exports: `encode`, `syndrome_x_measurement`, `syndrome_z_measurement`,
+`inject_error`, `correct_error`, `print_syndrome`, `run`.
+
+Both notebooks do `from shor_qec import *`. This avoids copy-pasting functions and keeps
+each notebook focused on its narrative.
+
+---
+
 ## Phase 4 — Noise Model Experiments (Next)
 
 ### What noise models add
@@ -140,6 +158,35 @@ QEC (just a single qubit with noise applied).
 
 ---
 
+## Phase 5 — IBM Hardware Comparison (TODO)
+
+Run the same circuit on a real IBM backend and compare against the AerSimulator results.
+
+### What this shows
+IBM publishes per-gate error rates for each backend (e.g. 0.1% single-qubit, 1% CX).
+We can:
+1. Run the Shor circuit on a real device (via `ibm_least_busy`)
+2. Measure fidelity of corrected output vs ideal
+3. Compare to what IBM's noise model predicts for that device
+
+This gives a **three-way comparison**:
+- Ideal (AerSimulator, no noise)
+- Noisy simulation (depolarizing at IBM's published gate error rate)
+- Real hardware
+
+If noisy simulation ≈ hardware, the model is validated. Difference between hardware and
+no-QEC baseline shows how much Shor actually helped on real qubits.
+
+### Requirements
+```python
+from qiskit_ibm_runtime import QiskitRuntimeService, SamplerV2
+service = QiskitRuntimeService()
+backend = service.least_busy(operational=True, simulator=False, min_num_qubits=17)
+```
+Need 17 qubits (9 data + 8 ancilla). Most IBM Eagle/Heron devices qualify.
+
+---
+
 ## Implementation Order
 
 | # | Task | Status |
@@ -153,6 +200,8 @@ QEC (just a single qubit with noise applied).
 | 7 | `run()` — full pipeline, clean circuit statevector | Done |
 | 8 | `test_error_correction()` + syndrome table display | Done |
 | 9 | Fidelity = 1.0 verified for X, Y, Z errors | Done |
-| 10 | Depolarizing noise sweep | Next |
-| 11 | Bit-flip + phase-flip sweeps | TODO |
-| 12 | Plots and report figures | TODO |
+| 10 | Extract functions → `shor_qec.py`, split into two notebooks | Next |
+| 11 | Depolarizing noise sweep (`Noise-Experiments.ipynb`) | TODO |
+| 12 | Bit-flip + phase-flip sweeps | TODO |
+| 13 | Plots and report figures | TODO |
+| 14 | IBM hardware run + three-way comparison | TODO |
