@@ -140,8 +140,8 @@ noise_model.add_all_qubit_quantum_error(depolarizing_error(p, 2), ['cx'])
 ```
 Sweep: `p ∈ [0.001, 0.005, 0.01, 0.05, 0.1]`
 
-**2. Bit-flip channel** — only X errors, isolates inner repetition code
-**3. Phase-flip channel** — only Z errors, isolates outer repetition code
+**2. AD Channel** — |1> --> |0>
+**3. Thermal relaxation channel** — AD + Z
 
 ### New function: `noise_sweep(p_values, make_noise_model, n_trials=50)`
 Loop over p values, call `run()` n_trials times per p with random |ψ⟩, average fidelity:
@@ -200,8 +200,8 @@ Need 17 qubits (9 data + 8 ancilla). Most IBM Eagle/Heron devices qualify.
 | 7 | `run()` — full pipeline, clean circuit statevector | Done |
 | 8 | `test_error_correction()` + syndrome table display | Done |
 | 9 | Fidelity = 1.0 verified for X, Y, Z errors | Done |
-| 10 | Extract functions → `shor_qec.py`, split into two notebooks | Next |
-| 11 | Depolarizing noise sweep (`Noise-Experiments.ipynb`) | TODO |
-| 12 | Bit-flip + phase-flip sweeps | TODO |
-| 13 | Plots and report figures | TODO |
-| 14 | IBM hardware run + three-way comparison | TODO |
+| 10 | Refactor, split into two notebooks | Done |
+| 11 | Noise sweeps | Done |
+| 12 | Plots and report figures | Done |
+| 13 | IBM hardware run + three-way comparison | TODO |
+| 14 | Create report | TODO |
