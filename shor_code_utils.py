@@ -22,6 +22,23 @@ def create_arbirtary_state():
     return alpha, beta
 
 
+'''
+encode (forward):
+qc.initialize([alpha, beta], 0)
+qc.cx(0, 3); qc.cx(0, 6)        # step 1: spread q0 → q3, q6
+qc.h([0, 3, 6])                  # step 2: Hadamards on lead qubits
+qc.cx(0, 1); qc.cx(0, 2)         # step 3: spread within block 0
+qc.cx(3, 4); qc.cx(3, 5)         # step 3: block 1
+qc.cx(6, 7); qc.cx(6, 8)         # step 3: block 2
+
+decode (reverse — undoes step 3, then step 2, then step 1):
+qc.cx(0, 1); qc.cx(0, 2)         # undo step 3, block 0
+qc.cx(3, 4); qc.cx(3, 5)         # undo step 3, block 1
+qc.cx(6, 7); qc.cx(6, 8)         # undo step 3, block 2
+qc.h([0, 3, 6])                  # undo step 2 (H is its own inverse)
+qc.cx(0, 3); qc.cx(0, 6)         # undo step 1
+'''
+
 def encode(alpha, beta):
     qc = QuantumCircuit(9)
     qc.initialize([alpha, beta], 0)
@@ -34,6 +51,15 @@ def encode(alpha, beta):
     qc.cx(6, 7); qc.cx(6, 8)
     return qc
 
+def decode(qc):
+    qc.cx(0, 1); qc.cx(0, 2)
+    qc.cx(3, 4); qc.cx(3, 5)
+    qc.cx(6, 7); qc.cx(6, 8)
+    qc.h([0, 3, 6])
+    qc.cx(0, 3); qc.cx(0, 6)
+    return qc
+
+##############################################################################
 
 def syndrome_x_measurement(qc):
     a = QuantumRegister(6, 'a')
@@ -51,6 +77,36 @@ def syndrome_x_measurement(qc):
     qc.cx(7, a[5]); qc.cx(8, a[5])
     qc.barrier()
     qc.measure(a, c)
+    return qc
+
+
+def syndrome_x_measurement_hw(qc):
+    """
+    Hardware-friendly X-syndrome measurement.
+    Same parity checks as syndrome_x_measurement, but writes each block's
+    2 syndrome bits into its own 2-bit ClassicalRegister (cx0, cx1, cx2).
+    This lets correct_error_dynamic use flat register-equality if_test
+    (no nesting, no switch) — required by ibm_fez's dynamic-circuit constraints.
+    """
+    a = QuantumRegister(6, 'a')
+    cx0 = ClassicalRegister(2, 'cx0')
+    cx1 = ClassicalRegister(2, 'cx1')
+    cx2 = ClassicalRegister(2, 'cx2')
+    qc.add_register(a)
+    qc.add_register(cx0); qc.add_register(cx1); qc.add_register(cx2)
+    qc.barrier()
+    qc.cx(0, a[0]); qc.cx(1, a[0])
+    qc.cx(1, a[1]); qc.cx(2, a[1])
+    qc.barrier()
+    qc.cx(3, a[2]); qc.cx(4, a[2])
+    qc.cx(4, a[3]); qc.cx(5, a[3])
+    qc.barrier()
+    qc.cx(6, a[4]); qc.cx(7, a[4])
+    qc.cx(7, a[5]); qc.cx(8, a[5])
+    qc.barrier()
+    qc.measure([a[0], a[1]], cx0)
+    qc.measure([a[2], a[3]], cx1)
+    qc.measure([a[4], a[5]], cx2)
     return qc
 
 
@@ -124,7 +180,7 @@ def print_syndrome(syndrome_string):
     print(f"│ Z parity│  {z_bits}    │ {z_table[z_bits]:12} │")
     print(f"└─────────┴────────┴──────────────┘")
 
-
+# This run is for simulator only
 def run(alpha, beta, error_block=None, error_position=None, error_type=None,
         backend=None, show_circuit=True, shots=1024):
     encoded_qc = encode(alpha, beta)
@@ -156,6 +212,37 @@ def run(alpha, beta, error_block=None, error_position=None, error_type=None,
     data_state = partial_trace(full_sv, list(range(9, 17)))
 
     return initial_sv, data_state
+
+# for real hardware we need to do the correction dynamically based on the syndrome measurement results, since we can't just run the whole circuit and measure at the end. This means we need to split the circuit into parts and run them sequentially, applying the correction after measuring the syndrome. We can use the qiskit runtime for this, which allows us to run circuits with mid-circuit measurements and conditional operations. Here's how we can implement that:
+def correct_error_hw_dynamic(qc, c_x_list, zc):
+    """
+    Hardware-friendly correction. Uses flat register-equality if_test
+    on per-block 2-bit registers (cx0, cx1, cx2) — no nesting, no switch.
+    Required by ibm_fez's dynamic-circuit constraints.
+    Bit ordering note (Qiskit, LSB first): for register c_x_block,
+    integer value = c_x_block[1]*2 + c_x_block[0].
+    """
+    # X correction per block
+    for block, cx in enumerate(c_x_list):
+        q0, q1, q2 = block*3, block*3 + 1, block*3 + 2
+
+        with qc.if_test((cx, 1)):    # 0b01 → c[0]=1, c[1]=0 → left  (q0) binary: 01
+            qc.x(q0)
+        with qc.if_test((cx, 3)):    # 0b11 → c[0]=1, c[1]=1 → middle (q1) binary: 10
+            qc.x(q1)
+        with qc.if_test((cx, 2)):    # 0b10 → c[0]=0, c[1]=1 → right (q2) b inary: 11
+            qc.x(q2)
+
+    # Z correction (single 2-bit zc register)
+    with qc.if_test((zc, 1)):        # 0b01 → zc[0]=1, zc[1]=0 → block 0
+        qc.z(0)
+    with qc.if_test((zc, 3)):        # 0b11 → zc[0]=1, zc[1]=1 → block 1
+        qc.z(3)
+    with qc.if_test((zc, 2)):        # 0b10 → zc[0]=0, zc[1]=1 → block 2
+        qc.z(6)
+
+    return qc
+
 
 
 def make_noise_model(noise_type, params, n_qubits):
