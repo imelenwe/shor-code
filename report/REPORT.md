@@ -1,6 +1,6 @@
 # Project 2 — Shor Code Report
 
-**Author:** imelenwe@gmail.com,  **Date:** 2026-04-26  **Hardware:** `ibm_fez` (Heron r2, 156 qubits)
+**Authors:** imelenwe@gmail.com, shyamprasadrao@gmail.com, vasudevag@gmail.com, vasavi.kuralla@gmail.com, keerthivasanshan@gmail.com   **Date:** 2026-04-26  **Hardware:** `ibm_fez` (Heron r2, 156 qubits)
 
 ## 1. Objective
 

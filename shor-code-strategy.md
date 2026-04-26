@@ -203,5 +203,5 @@ Need 17 qubits (9 data + 8 ancilla). Most IBM Eagle/Heron devices qualify.
 | 10 | Refactor, split into two notebooks | Done |
 | 11 | Noise sweeps | Done |
 | 12 | Plots and report figures | Done |
-| 13 | IBM hardware run + three-way comparison | TODO |
-| 14 | Create report | TODO |
+| 13 | IBM hardware run + three-way comparison | Done |
+| 14 | Create report | Done |
