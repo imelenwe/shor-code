@@ -72,9 +72,10 @@ Run B transpiled (with `optimization_level=3`, `seed_transpiler=42`) to depth 25
 | Real hardware, with Shor code (Run B, 8192 shots) | 0.7004 | 0.0051 |
 
 **Δ (B − A) = −0.0233**, a 3.3 σ negative effect. The Shor code **reduces fidelity**
-on `ibm_fez`. The 22-percentage-point drop from the noisy simulator to the real
-hardware no-QEC bar quantifies the noise the device-level calibration model does not
-capture (crosstalk, parallel-gate interference, calibration drift, leakage).
+on `ibm_fez`. The ~16% drop from the noisy simulator to the real
+hardware no-QEC bar quantifies the noise on the hardware but does not
+capture (crosstalk, parallel-gate interference, calibration drift, leakage). 
+A further ~2% drop includes the same.
 
 ## 5. Discussion
 
