@@ -2,6 +2,8 @@
 
 **Authors:** imelenwe@gmail.com, shyamprasadrao@gmail.com, vasudevag@gmail.com, vasavi.kuralla@gmail.com, keerthivasanshan@gmail.com   **Date:** 2026-04-26  **Hardware:** `ibm_fez` (Heron r2, 156 qubits)
 
+**Repository:** <https://github.com/imelenwe/shor-code>
+
 ## 1. Objective
 
 Implement the Shor 9-qubit quantum error-correcting code, verify correctness against
